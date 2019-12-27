@@ -2,7 +2,7 @@ from flask import request
 from flask_restful import Resource
 
 from models import Message, Room, User, serialize_multiple
-from settings import db
+from utils.validator import ModelValidator
 
 
 class Rooms(Resource):
@@ -12,27 +12,17 @@ class Rooms(Resource):
     def post(self):
         data = request.get_json()
 
-        room = Room(**data)
-        db.session.add(room)
-        db.session.flush()
-
-        room_id = room.id
-        db.session.commit()
-
-        return {"id": room_id}, 201
+        return ModelValidator(Room).post(data)
 
 
 class RoomUsers(Resource):
     def get(self, room_id):
-        return serialize_multiple(Room.query.get(room_id).users)
+        return ModelValidator(Room).get_model_in_room_by_id(room_id)
 
     def post(self, room_id):
         user_id = request.get_json()['user_id']
-        room = Room.query.get(room_id)
-        room.users.append(User.query.get(user_id))
-        db.session.commit()
 
-        return {}, 201
+        return ModelValidator(Room).post_model_in_room_by_id(room_id, user_id)
 
 
 class RoomMessages(Resource):

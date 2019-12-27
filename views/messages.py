@@ -2,6 +2,7 @@ from flask import request
 from flask_restful import Resource
 
 from models import Message, serialize_multiple
+from utils.validator import ModelValidator
 from settings import db
 
 
@@ -17,26 +18,17 @@ class Messages(Resource):
     def post(self):
         data = request.get_json()
 
-        message = Message(**data)
-        db.session.add(message)
-        db.session.flush()
-
-        message_id = message.id
-        db.session.commit()
-
-        return {"id": message_id}, 201
+        return ModelValidator(Message).post(data)
 
 
 class SingleMessage(Resource):
     def get(self, message_id):
-        return Message.query.get(message_id).serialize()
+        return ModelValidator(Message).get_by_id(message_id)
 
     def patch(self, message_id):
         data = request.get_json()
-        db.session.query(Message).filter_by(id=message_id).update(data)
-        db.session.commit()
 
-        return 204
+        return ModelValidator(Message).patch_by_id(message_id, data)
 
     def delete(self, message_id):
         db.session.query(Message).filter_by(id=message_id).delete()
